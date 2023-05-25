@@ -1,0 +1,30 @@
+{
+  "name": "ec-layout",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "This app launches a two-person video conference, where we will showcase how one can use Experience Composer to record and view how we can record layout changes.",
+  "main": "server.js",
+  "homepage": ".",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "mega.siswanto@vonage.com",
+  "license": "ISC",
+  "dependencies": {
+    "atob": "^2.1.2",
+    "axios": "^0.27.2",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.1",
+    "http": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.0",
+    "morgan": "^1.10.0",
+    "neru-alpha": "^3.0.0",
+    "opentok": "^2.16.0",
+    "path": "^0.12.7",
+    "socket.io": "^4.5.1",
+    "uuid": "^9.0.0"
+  }
+}

@@ -1,0 +1,56 @@
+<html>
+<head>
+  <title>Experience Composer Video Player Demo</title>
+  <link href="css/index.css" rel="stylesheet" type="text/css">
+  <script src="https://static.opentok.com/v2/js/opentok.min.js"></script>
+  <script src="lib/opentok-layout.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body class="ec-layout">
+  <div id="login">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" placeholder="Your Name" />
+
+    <label for="room">Room Name</label>
+    <input type="text" id="roomName" name="roomName" placeholder="Room Name" />
+
+    <button onclick="login()">Submit</button>
+  </div>
+
+  <div id="layoutContainer" class="layout1 hide">
+    <!-- <div id="publisherContainer"></div> -->
+  </div>
+
+  <div id="controls" class="hide">
+    <button id="change-publish-audio">
+      <img id="audio-on" src="icons/mic_on.svg" />
+      <img id="audio-off" src="icons/mic_off.svg" class="hide" />
+    </button>
+    <button id="change-publish-video">
+      <img id="video-on" src="icons/videocam_on.svg" />
+      <img id="video-off" src="icons/videocam_off.svg" class="hide" />
+    </button>
+    <button id="record-on-off">
+      <img id="record-on" src="icons/record_on.svg" class="red hide" />
+      <img id="record-off" src="icons/record_off.svg" />
+    </button>
+    <button id="download">
+      <img src="icons/download.svg" />
+    </button>
+  </div>
+
+  <div id="notification" class="hide"></div>
+
+  <div id="archive-list" class="modal">
+    <div class="modal-content">
+      <span id="archive-list-close" class="close">&times;</span>
+      <div id="archive-list-content"></div>
+    </div>
+  
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script rel="preload" type="text/javascript" src="js/index.js"></script>
+</body>
+</html>

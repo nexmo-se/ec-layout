@@ -1,0 +1,135 @@
+.ec-layout {
+  background: black;
+}
+
+.ec-layout .hide {
+  display: none !important;
+}
+
+/* Login */
+#login {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  padding-top: 15%;
+  width: 200px;
+  margin: auto;
+}
+
+#login label {
+  margin-bottom: 5px;
+}
+#login input {
+  margin-bottom: 20px;
+}
+#login button {
+  width: fit-content;
+  margin: 10px auto auto;
+}
+
+/* Controls & Notifications */
+.ec-layout #controls {
+  position: absolute;
+  bottom: 40px;
+  left: 0%;
+  width: 100%;
+  height: fit-content;
+  z-index: 110;
+  text-align: center;
+}
+
+.ec-layout #controls .red {
+  filter: invert(12%) sepia(60%) saturate(6286%) hue-rotate(356deg) brightness(128%) contrast(122%);
+}
+
+.ec-layout label {
+  font-size: 1em;
+  font-family: sans-serif;
+  color: #fff;
+  vertical-align: super;
+}
+
+.ec-layout #controls img {
+  height: 24px;
+  width: 24px;
+}
+
+.ec-layout #notification {
+  position: absolute;
+  bottom: 105px;
+  font-size: 1em;
+  left: 30%;
+  width: 40%;
+  height: fit-content;
+  z-index: 110;
+  text-align: center;
+  background-color: #b2e19f;
+  padding: 4px 10px;
+  color: #000;
+  font-family: sans-serif;
+  border-radius: 5px;
+  box-shadow: 5px 4px #000;
+}
+
+/* Modal styling */
+.ec-layout .modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.ec-layout .modal-content {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+.ec-layout .modal-content .close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.ec-layout .modal-content .close:hover,
+.ec-layout .modal-content .close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ec-layout .modal-content #archive-list-content {
+  padding: 40px 10px 20px;
+  line-height: 1.4;
+}
+
+/* Video Layouts */
+.ec-layout #layoutContainer.layout1 {
+  display: flex;
+  height: 100%;
+  overflow: scroll;
+  flex-wrap: wrap;
+}
+
+.ec-layout #layoutContainer.layout2 {
+  display: flex;
+  height: 100%;
+  overflow: scroll;
+  flex-wrap: wrap;
+}
+
+.ec-layout #layoutContainer.layout3 {
+  display: flex;
+  height: 100%;
+  overflow: scroll;
+}
