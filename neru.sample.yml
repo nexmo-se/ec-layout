@@ -1,0 +1,24 @@
+project:
+    name: [PROJECT_NAME]
+instance:
+    name: dev
+    runtime: nodejs16
+    region: [PROJECT_REGION]
+    application-id: [APP_ID]
+    entrypoint:
+        - node
+        - server.js
+    environment:
+        - name: PROJECT_API_KEY
+          value: ""
+        - name: PROJECT_API_SECRET
+          value: ""
+        - name: JWT_SECRET
+          value: ""
+        - name: JWT_EXPIRY
+          value: ""
+debug:
+    name: debug
+    entrypoint:
+        - nodemon
+        - server.js
