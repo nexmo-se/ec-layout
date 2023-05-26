@@ -48,6 +48,14 @@ const opentok = new OpenTok(PROJECT_API_KEY, PROJECT_API_SECRET);
 
 const APP_BASE_URL = `https://${process.env.INSTANCE_SERVICE_NAME}.${process.env.REGION.split(".")[1]}.serverless.vonage.com`;
 
+app.get('/_/health', async (req, res) => {
+  res.sendStatus(200);
+});
+
+app.get('/up', async (req, res, next) => {
+  res.send('hello world').status(200);
+});
+
 app.get('/', (req, res, next) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -121,7 +129,7 @@ app.post('/init/recorder-page', async (req, res, next) => {
       throw("Invalid roomId");
     }
 
-    let token = await generateToken(room.sessionId, "subscriber");
+    let token = await generateToken(room.sessionId);//, "subscriber");
     console.log(`Subscriber Token created`);
 
     res.json({
@@ -141,37 +149,36 @@ app.post('/init/recorder-page', async (req, res, next) => {
 
 app.post('/start-ec', async (req, res, next) => {
   try {
-    let { roomName, sessionId } = req.body;
+    let { roomName } = req.body;
     // console.log("/start-ec", JSON.stringify(req.body));
 
-    if (!roomName || !sessionId) {
-      throw("roomName, sessionId can't be empty!");
+    if (!roomName) {
+      throw("roomName can't be empty!");
     }
 
-    // Check for existing Experience Composer and delete them
-    let existingExperienceComposers = await listExperienceComposers();
-    for (let i = 0; i < existingExperienceComposers.length; i++) {
-      if (existingExperienceComposers[i].sessionId === sessionId && existingExperienceComposers[i].status !== "stopped" && existingExperienceComposers[i].status !== "failed") {
-        await deleteExperienceComposer(existingExperienceComposers[i].id);
-      }
-    }
-
+    // Find room
     let room = await findRoom({ roomName, createIfNotFound: false });
     let roomId = room.id;
+    console.log(`room found:`, JSON.stringify(room));
 
-    // let token = await generateToken(sessionId, "subscriber");
-    // console.log(`Subscriber Token created`);
-    let token = await generateToken(sessionId);
+    // Init Experience Composer
+    const generateSessionFunction = Util.promisify(generateSession);
+    let ecSessionId = await generateSessionFunction();
+    console.log(`EC session created`, ecSessionId);
+    
+    let token = await generateToken(ecSessionId);
     console.log(`Token created`);
     
-    let experienceComposer = await initExperienceComposer(sessionId, token, `${APP_BASE_URL}/recorder-page`, roomId);
+    let experienceComposer = await initExperienceComposer(ecSessionId, token, `${APP_BASE_URL}/recorder-page`, roomId);
     console.log(`Experience Composer created`);
     let archiveInfo = {
       ecId: experienceComposer.id,
+      ecSessionId,
       archiveId: null,
       status: "pending"
     };
     await saveArchiveInfo(roomName, archiveInfo);
+    console.log(`Archive info saved`);
 
     io.to(`room_${roomId}`).emit("event", {
       type: "archiveUpdate",
@@ -219,6 +226,7 @@ app.post('/stop-ec', async (req, res, next) => {
     result.deleteExperienceComposer = await deleteExperienceComposer(room.archiveInfo.ecId);
     console.log(`Experience Composer deleted`);
 
+    await saveEcSessionId(room.name, room.archiveInfo.ecSessionId);
     await saveArchiveInfo(room.name, null);
 
     io.to(`room_${room.id}`).emit("event", {
@@ -242,21 +250,22 @@ app.post('/events/ec', async (req, res, next) => {
   try {
     console.log(new Date(), " | /events/ec", JSON.stringify(req.body));
 
-    let { id, streamId, sessionId, status } = req.body;
+    let { id, streamId, sessionId: ecSessionId, status } = req.body;
 
     if (status === "started") {
-      let room = await findRoom({ sessionId, createIfNotFound: false });
+      let room = await findRoom({ ecSessionId, createIfNotFound: false });
       console.log("room", room);
       if (!room) {
         throw("Invalid sessionId");
       }
       let roomName = room.name;
 
-      let archive = await startArchiving(sessionId);
+      let archive = await startArchiving(ecSessionId);
       console.log(`Starting Archive`);
 
       await saveArchiveInfo(roomName, {
         ecId: id,
+        ecSessionId,
         archiveId: archive.id,
         status: "starting"
       });
@@ -266,6 +275,7 @@ app.post('/events/ec', async (req, res, next) => {
 
       await saveArchiveInfo(roomName, {
         ecId: id,
+        ecSessionId,
         archiveId: archive.id,
         status: "ongoing"
       });
@@ -316,15 +326,23 @@ app.post('/list/archive', async (req, res, next) => {
   try {
     console.log(new Date(), " | /list/archive", JSON.stringify(req.body));
 
-    let { sessionId, page } = req.body;
-    if (!page) {
-      page = 1;
+    let { sessionId } = req.body;
+    
+    let room = await findRoom({ sessionId, createIfNotFound: false });
+    console.log("room", room);
+    if (!room) {
+      throw("Invalid sessionId");
     }
-    let offset = (page - 1) * ARCHIVE_LIST_LIMIT;
-    let count = ARCHIVE_LIST_LIMIT;
+    let ecSessionIds = room.ecSessionIds;
+    console.log("ecSessionIds", ecSessionIds);
 
-    let result = await listArchives(count, offset, sessionId);
-    result.page = page;
+    let result = { count: 0, items: [] };
+    for(let i = 0; i < ecSessionIds.length; i++) {
+      let archives = await listArchives(ecSessionIds[i]);
+      console.log("archives", archives);
+      result.count += archives.count;
+      result.items = result.items.concat(archives.items);
+    }
 
     res.json(result).status(200);
   } catch (error) {
@@ -405,7 +423,7 @@ async function generateJwt() {
 //   return JSON.parse(jsonPayload);
 // };
 
-async function findRoom({ roomName, roomId, sessionId, createIfNotFound }) {
+async function findRoom({ roomName, roomId, sessionId, ecSessionId, createIfNotFound }) {
   if (!createIfNotFound) createIfNotFound = false;
 
   const key = `${APP_ID}:rooms`;
@@ -420,9 +438,10 @@ async function findRoom({ roomName, roomId, sessionId, createIfNotFound }) {
 
   for(let i = 0; i < rooms.length; i++) {
     if (
-      roomName && rooms[i].name === roomName ||
-      sessionId && rooms[i].sessionId === sessionId ||
-      roomId && rooms[i].id === roomId
+      (roomName && rooms[i].name === roomName) ||
+      (ecSessionId && rooms[i].archiveInfo && rooms[i].archiveInfo.ecSessionId === ecSessionId) ||
+      (sessionId && rooms[i].sessionId === sessionId) ||
+      (roomId && rooms[i].id === roomId)
     ) {
       room = rooms[i];
     }
@@ -438,7 +457,8 @@ async function findRoom({ roomName, roomId, sessionId, createIfNotFound }) {
       layoutInfo: {
         layoutType: 1,
         videosLayout: []
-      }
+      },
+      ecSessionIds: []
     };
     rooms.push(room);
     await instanceState.set(key, rooms);
@@ -504,6 +524,26 @@ async function saveArchiveInfo(roomName, archiveInfo) {
   return room;
 }
 
+async function saveEcSessionId(roomName, ecSessionId) {
+  const key = `${APP_ID}:rooms`;
+  let rooms = await instanceState.get(key);
+  let room = null;
+
+  for(let i = 0; i < rooms.length; i++) {
+    if (rooms[i].name === roomName) {
+      rooms[i].ecSessionIds.push(ecSessionId);
+      room = rooms[i];
+      await instanceState.set(key, rooms);
+    }
+  }
+
+  if (!room) {
+    throw("Invalid room name");
+  }
+
+  return room;
+}
+
 async function saveLayoutInfo(roomName, layoutInfo) {
   const key = `${APP_ID}:rooms`;
   let rooms = await instanceState.get(key);
@@ -539,7 +579,7 @@ async function initExperienceComposer(sessionId, token, url, roomId) {
     sessionId,
     token,
     url: `${url}?roomId=${roomId}`,
-    properties: { name: "EC-Layout-Recorder" },
+    properties: { name: "ecomposer" },
     projectId: PROJECT_API_KEY,
     maxDuration: EC_MAX_DURATION
   });
@@ -616,7 +656,8 @@ async function startArchiving(sessionId) {
     sessionId,
     hasAudio: true,
     hasVideo: true,
-    streamMode: "manual"
+    streamMode: "manual",
+    resolution : "1920x1080",
   });
 
   var config = {
@@ -677,7 +718,7 @@ async function stopArchiving(archiveId) {
   return response.data;
 }
 
-async function listArchives(count, offset, sessionId) {
+async function listArchives(sessionId, count, offset) {
   let jwt = await generateJwt();
 
   let url = `https://api.opentok.com/v2/project/${PROJECT_API_KEY}/archive?count=${count ? count : ARCHIVE_LIST_LIMIT}&offset=${offset ? offset : "0"}`;

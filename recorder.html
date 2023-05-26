@@ -1,18 +1,20 @@
 <html>
 <head>
   <title>EC Recorder</title>
+  <link href="css/ve.css" rel="stylesheet" type="text/css" media="screen" charset="utf-8">
   <link href="css/index.css" rel="stylesheet" type="text/css">
 
-  <script src="https://static.opentok.com/v2/js/opentok.min.js"></script>
-  <script src="lib/opentok-layout.min.js"></script>
+  <link rel="prefetch" href="assets/vonage.png" />
+
+  <script src="https://static.opentok.com/v1/js/video-express.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
 
 <body class="ec-layout recorder" style="background-color: black;">
-  <div id="layoutContainer" class="layout1">
-    <!-- <div id="publisherContainer"></div> -->
-  </div>
+  <div id="roomContainer"></div>
 
+  <img class="vonage-logo" src="assets/vonage.png" />
+  
   <script src="/socket.io/socket.io.js"></script>
   <script rel="preload" type="text/javascript" src="js/recorder.js"></script>
 </body>
