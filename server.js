@@ -24,7 +24,7 @@ const PROJECT_API_SECRET = process.env.PROJECT_API_SECRET;
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRY = process.env.JWT_EXPIRY;
 const EC_LIST_LIMIT = 100;
-const EC_MAX_DURATION = 600;
+const EC_MAX_DURATION = 7200; // 2 hours
 const ARCHIVE_LIST_LIMIT = 50;
 
 const instanceState = neru.getGlobalState();
