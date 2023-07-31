@@ -28,5 +28,7 @@ package-lock.json
 yarn.lock
 
 neru.yml
+neru.dev.yml
+neru.test.yml
 
 *.log
